@@ -2,7 +2,7 @@ POST http://localhost:8080/messages
 Content-Type: application/json
 
 {
-    "from": "chris",
-    "to": "nerijus",
-    "message": "hey whats up"
+    "from": "bob",
+    "to": "dave",
+    "message": "1010101000101101"
 }

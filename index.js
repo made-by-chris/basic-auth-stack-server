@@ -3,7 +3,7 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 require("dotenv").config();
 const connectToDB = require("./models");
-
+const Message = require("./models/Message");
 //1. connect to database
 //2. import Message Model
 
@@ -17,24 +17,34 @@ app.use(express.json());
 
 app
   .route("/messages")
-  .get((request, response) => {
-    response.send("get request received");
+  .get(async (request, response) => {
+    const messages = await Message.find({});
+    response.json(messages);
   })
-  .post((request, response) => {
-    console.log(request.body);
-    response.send(`you posted ${JSON.stringify(request.body)}`);
+  .post(async (request, response) => {
+    const res = await Message.create(request.body);
+    response.send(res);
   });
 
 app
   .route("/messages/:id")
-  .get((request, response) => {
-    response.send(`you requested ${request.params.id}`);
+  .get(async (request, response) => {
+    const message = await Message.find({ _id: request.params.id });
+    response.json(message);
   })
-  .put((request, response) => {
-    response.send("put request received");
+  .put(async (request, response) => {
+    const message = await Message.findOneAndUpdate(
+      { _id: request.params.id },
+      request.body,
+      {
+        new: true,
+      }
+    );
+    response.json(message);
   })
-  .delete((request, response) => {
-    response.send("delete request received");
+  .delete(async (request, response) => {
+    const message = await Message.findByIdAndDelete(request.params.id);
+    response.json(message);
   });
 
 connectToDB().then(() => {
