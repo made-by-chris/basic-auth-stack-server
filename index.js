@@ -4,16 +4,20 @@ const PORT = process.env.PORT || 8080;
 require("dotenv").config();
 const connectToDB = require("./models");
 const Message = require("./models/Message");
-//1. connect to database
-//2. import Message Model
+const cors = require("cors");
 
-// a middleware
+// push to heroku
+// create react / html file to talk to server with CORS
+// create a /search route
+// get messages by groupID
+
 app.use((req, res, next) => {
   console.log(req.method, req.path);
   next();
 });
 
 app.use(express.json());
+app.use(cors());
 
 app
   .route("/messages")
