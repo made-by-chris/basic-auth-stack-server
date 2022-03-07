@@ -7,35 +7,32 @@ const Message = require("./models/Message");
 const cors = require("cors");
 const messageRouter = require("./routes/Message");
 const userRouter = require("./routes/User");
-const session = require("express-session");
+// const session = require("express-session");
+const jwt = require("jsonwebtoken");
+const mySuperSecret = process.env.JWT_SECRET;
 
 // push to heroku
 // create react / html file to talk to server with CORS
 // create a /search route
 // get messages by groupID
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "dev_blabla",
-    resave: false,
-    saveUninitialized: true,
-  })
-);
+// app.use(
+//   session({
+//     secret: process.env.SESSION_SECRET || "dev_blabla",
+//     resave: false,
+//     saveUninitialized: true,
+//   })
+// );
+
+// app.use((req, res, next) => {
+//   req.session.requestCount = req.session.requestCount
+//     ? req.session.requestCount + 1
+//     : 1;
+//   next();
+// });
 
 app.use((req, res, next) => {
-  req.session.requestCount = req.session.requestCount
-    ? req.session.requestCount + 1
-    : 1;
-  next();
-});
-
-app.use((req, res, next) => {
-  console.log(
-    req.method,
-    req.path,
-    req.sessionID,
-    `visited ${req.session.requestCount} times.`
-  );
+  console.log(req.method, req.path, req.sessionID);
   next();
 });
 
@@ -46,7 +43,6 @@ app.route("/messages").get(async (request, response, next) => {
   const messages = await Message.find({});
   response.json(messages);
 });
-// ...
 
 app.use((error, req, res, next) => {
   console.error(error.message);
@@ -55,6 +51,33 @@ app.use((error, req, res, next) => {
 
 app.use("/messages", messageRouter);
 app.use("/users", userRouter);
+
+const generateToken = (data, secret) =>
+  jwt.sign(data, secret, { expiresIn: "1800s" });
+
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader) {
+    const token = authHeader.split(" ")[1];
+
+    jwt.verify(token, mySuperSecret, (err, user) => {
+      if (err) {
+        console.log(err);
+        return res.sendStatus(403);
+      }
+
+      req.user = user;
+      next();
+    });
+  } else {
+    res.sendStatus(401);
+  }
+};
+app.get("/set-token", (req, res) =>
+  res.send(generateToken({ name: "john" }, mySuperSecret))
+);
+app.get("/verify-token", verifyToken, (req, res) => res.send(req.user));
 
 connectToDB().then(() => {
   app.listen(PORT, () => console.log("STARTED LISTENING ON PORT " + PORT));
