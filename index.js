@@ -3,14 +3,20 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 require("dotenv").config();
 const connectToDB = require("./models");
-const Message = require("./models/Message");
 const cors = require("cors");
 const messageRouter = require("./routes/Message");
 const userRouter = require("./routes/User");
 // const session = require("express-session");
-const jwt = require("jsonwebtoken");
-const mySuperSecret = process.env.JWT_SECRET;
+const auth = require("./utilities/auth");
+const jwt = require("./utilities/jwt");
 
+// loggedInOnlyRoute (WEBPAGE) DONE
+// AUTHENTICATION
+// act of proving your identity / your rights
+// AUTHORIZATION
+// inspection of your identity / your rights
+
+// ERROR HANDLING in routes
 // push to heroku
 // create react / html file to talk to server with CORS
 // create a /search route
@@ -32,52 +38,40 @@ const mySuperSecret = process.env.JWT_SECRET;
 // });
 
 app.use((req, res, next) => {
-  console.log(req.method, req.path, req.sessionID);
+  console.log(req.method, req.path);
   next();
 });
 
 app.use(express.json());
 app.use(cors());
+app.use(jwt.decodeToken);
 
-app.route("/messages").get(async (request, response, next) => {
-  const messages = await Message.find({});
-  response.json(messages);
+app.use("/messages", messageRouter);
+app.use("/users", userRouter);
+
+app.get("/loggedInPage", auth.isLoggedIn, (req, res) => {
+  res.send(`<html>
+  <body>
+    <h1>welcome to the logged in page!!!</h1>
+  </body>
+  </html>`);
 });
+
+app.get("/downloads/31209821908", auth.ownsRequestedProduct, (req, res) => {
+  res.download(__dirname + "31209821908");
+});
+
+app.get("/set-token", (req, res) =>
+  res.send(
+    jwt.generateToken({ user_id: 793879812733891273 }, process.env.JWT_SECRET)
+  )
+);
+app.get("/verify-token", jwt.verifyToken, (req, res) => res.send(req.user));
 
 app.use((error, req, res, next) => {
   console.error(error.message);
   res.status(500).send("Something broke!");
 });
-
-app.use("/messages", messageRouter);
-app.use("/users", userRouter);
-
-const generateToken = (data, secret) =>
-  jwt.sign(data, secret, { expiresIn: "1800s" });
-
-const verifyToken = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-
-  if (authHeader) {
-    const token = authHeader.split(" ")[1];
-
-    jwt.verify(token, mySuperSecret, (err, user) => {
-      if (err) {
-        console.log(err);
-        return res.sendStatus(403);
-      }
-
-      req.user = user;
-      next();
-    });
-  } else {
-    res.sendStatus(401);
-  }
-};
-app.get("/set-token", (req, res) =>
-  res.send(generateToken({ name: "john" }, mySuperSecret))
-);
-app.get("/verify-token", verifyToken, (req, res) => res.send(req.user));
 
 connectToDB().then(() => {
   app.listen(PORT, () => console.log("STARTED LISTENING ON PORT " + PORT));
