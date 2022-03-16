@@ -63,7 +63,10 @@ app.get("/downloads/31209821908", auth.ownsRequestedProduct, (req, res) => {
 
 app.get("/set-token", (req, res) =>
   res.send(
-    jwt.generateToken({ user_id: 793879812733891273 }, process.env.JWT_SECRET)
+    jwt.generateToken(
+      { user_id: "5ce819935e539c343f141ece" },
+      process.env.JWT_SECRET
+    )
   )
 );
 app.get("/verify-token", jwt.verifyToken, (req, res) => res.send(req.user));

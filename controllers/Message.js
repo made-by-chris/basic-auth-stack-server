@@ -8,17 +8,13 @@ async function getAllMessages(request, response) {
 
 async function createMessage(request, response) {
   const msg = {
-    from: { required: true, type: String },
-    to: { required: true, type: String },
-    message: { required: true, type: String },
-    user: {
-      required: true,
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+    from: request.body.from,
+    to: request.body.to,
+    message: request.body.message,
+    user: request.token.user_id,
   };
 
-  const res = await Message.create(request.body);
+  const res = await Message.create(msg);
   response.send(res);
 }
 
