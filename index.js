@@ -62,15 +62,10 @@ app.get("/downloads/31209821908", auth.ownsRequestedProduct, (req, res) => {
 });
 
 app.get("/set-token", (req, res) =>
-  res.send(
-    jwt.generateToken(
-      { user_id: "5ce819935e539c343f141ece" },
-      process.env.JWT_SECRET
-    )
-  )
+  res.send(jwt.generateToken({ id: "5ce819935e539c343f141ece" }))
 );
-app.get("/verify-token", jwt.verifyToken, (req, res) => res.send(req.user));
 
+app.get("/verify-token", jwt.verifyToken, (req, res) => res.send(req.user));
 app.use((error, req, res, next) => {
   console.error(error.message);
   res.status(500).send("Something broke!");

@@ -1,14 +1,11 @@
 const User = require("../models/User");
 
 function isLoggedIn(req, res, next) {
-  if (req.token && req.token.user_id) {
+  console.log(req.token, req.token.id);
+  if (req.token && req.token.id) {
     next();
   } else {
-    res.send(`<html>
-    <body>
-      <h1>welcome to the site. please log in to continue</h1>
-    </body>
-    </html>`);
+    res.sendStatus(401);
   }
   // has token
   // token contains user id
