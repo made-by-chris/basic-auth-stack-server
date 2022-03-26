@@ -30,7 +30,6 @@ const decodeToken = (req, res, next) => {
       const token = authHeader.split(" ")[1];
       jwt.verify(token, process.env.JWT_SECRET, (err, token) => {
         req.token = token;
-        console.log(req.token);
         next();
       });
     } else {

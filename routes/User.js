@@ -5,23 +5,23 @@ const jwt = require("../utilities/jwt");
 
 router
   .route("/")
-  .get(async (request, response) => {
+  .get(async (req, res) => {
     const users = await User.find({});
-    response.json(users);
+    res.json(users);
   })
-  .post(async (request, response) => {
+  .post(async (req, res) => {
     try {
-      const res = await User.create(request.body);
-      response.send({
+      const user = await User.create(req.body);
+      res.send({
         message: "User created successfully",
-        data: res,
+        data: user,
         success: true,
-        jwt: jwt.generateToken({ id: res._id }),
+        jwt: jwt.generateToken({ id: user._id }),
       });
     } catch (error) {
       switch (error.code) {
         case 11000:
-          response.status(400).send({
+          res.status(400).send({
             message:
               "User with this email already exists, please try logging in",
             success: false,
@@ -29,7 +29,7 @@ router
           });
           break;
         default:
-          response.status(400).send({
+          res.status(400).send({
             message: error.message,
             success: false,
             data: error,
@@ -38,32 +38,66 @@ router
     }
   });
 
-router.get("/me", async (request, response) => {
-  if (request.token.id) {
+router.route("/login").post(async (req, res) => {
+  console.log(req.body.email, req.body.password);
+  try {
+    User.authenticate(req.body.email, req.body.password, (error, user) => {
+      if (error) {
+        console.log(error);
+        res.send({
+          message: error.message,
+          success: false,
+          data: error,
+        });
+      } else {
+        console.log(req.body.email + " logged in successfully");
+        res.send({
+          message: "User logged-in successfully",
+          data: user,
+          success: true,
+          jwt: jwt.generateToken({ id: user._id }),
+        });
+      }
+    });
+  } catch (error) {
+    switch (error.code) {
+      default:
+        console.log(req.body.email + " failed to login  ");
+        res.status(400).send({
+          message: error.message,
+          success: false,
+          data: error,
+        });
+    }
+  }
+});
+
+router.get("/me", async (req, res) => {
+  if (req.token.id) {
     try {
-      const user = await User.findById(request.token.id);
+      const user = await User.findById(req.token.id);
       if (!user) {
-        response.status(404).send({
+        res.status(404).send({
           message: "User not found",
           success: false,
           data: user,
         });
       } else {
-        response.send({
+        res.send({
           message: "User found",
           success: true,
           data: user,
         });
       }
     } catch (error) {
-      response.status(400).send({
+      res.status(400).send({
         message: error.message,
         success: false,
         data: error,
       });
     }
   } else {
-    response.send({
+    res.send({
       message: "You are not logged in",
       success: false,
     });
@@ -72,23 +106,19 @@ router.get("/me", async (request, response) => {
 
 router
   .route("/:id")
-  .get(async (request, response) => {
-    const user = await User.find({ _id: request.params.id });
-    response.json(user);
+  .get(async (req, res) => {
+    const user = await User.find({ _id: req.params.id });
+    res.json(user);
   })
-  .put(async (request, response) => {
-    const user = await User.findOneAndUpdate(
-      { _id: request.params.id },
-      request.body,
-      {
-        new: true,
-      }
-    );
-    response.json(user);
+  .put(async (req, res) => {
+    const user = await User.findOneAndUpdate({ _id: req.params.id }, req.body, {
+      new: true,
+    });
+    res.json(user);
   })
-  .delete(async (request, response) => {
-    const user = await User.findByIdAndDelete(request.params.id);
-    response.json(user);
+  .delete(async (req, res) => {
+    const user = await User.findByIdAndDelete(req.params.id);
+    res.json(user);
   });
 
 module.exports = router;
